@@ -1,0 +1,30 @@
+# Artifacts produced by training runs
+artifacts/
+*/artifacts/
+data/raw/
+data/interim/
+*.pkl
+*.joblib
+*.png
+!docs/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
