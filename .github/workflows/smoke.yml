@@ -1,0 +1,46 @@
+name: training runs
+
+# The test suites cover the components; this checks that each project's
+# entry point still runs end to end, on a cut-down configuration so the
+# whole matrix finishes in a couple of minutes.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: fraud-detection
+            args: --n-legit 40000 --n-accounts 3000 --no-plots
+          - project: demand-forecasting
+            args: --n-skus 12 --n-folds 2 --no-plots
+          - project: semantic-similarity
+            args: --n-pairs 8000 --n-intents 300 --no-plots
+          - project: recommender-system
+            args: --n-users 600 --n-items 500 --no-plots
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train ${{ matrix.project }}
+        working-directory: ${{ matrix.project }}
+        run: python -m src.train ${{ matrix.args }}
+
+      - name: Check metrics were written
+        working-directory: ${{ matrix.project }}
+        run: test -f artifacts/metrics.json
