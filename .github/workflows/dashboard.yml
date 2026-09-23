@@ -1,0 +1,73 @@
+name: Build and deploy the results dashboard
+
+# Runs all four trainings, then renders the dashboard from the metrics they
+# wrote and publishes it to GitHub Pages. The page is therefore always a
+# report of what the code computed on this commit, not a snapshot someone
+# remembered to update.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Train all four projects
+        run: |
+          for p in fraud-detection demand-forecasting semantic-similarity recommender-system; do
+            echo "::group::$p"
+            (cd "$p" && python -m src.train --output-dir artifacts)
+            echo "::endgroup::"
+          done
+
+      - name: Build the dashboard
+        run: python -m dashboard.build --out site/index.html
+
+      - name: Check it is self-contained
+        run: |
+          python - <<'PY'
+          import re, pathlib, sys
+          html = pathlib.Path("site/index.html").read_text(encoding="utf-8")
+          external = re.findall(r'(?:src|href)="(?!data:|#)([^"]+)"', html)
+          bad = [u for u in external if not u.startswith("https://github.com/")]
+          if bad:
+              sys.exit(f"external references in the page: {bad}")
+          if re.search(r"<script[^>]+src=", html) or re.search(r"<link[^>]+href=", html):
+              sys.exit("page pulls in an external script or stylesheet")
+          print(f"self-contained, {len(html)/1024:.0f} KB")
+          PY
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
