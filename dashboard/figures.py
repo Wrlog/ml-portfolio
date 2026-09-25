@@ -103,7 +103,7 @@ def demand(metrics: dict, theme: Theme) -> bytes:
                    edgecolors=theme.surface, linewidths=0.8, zorder=3)
     ax.set_xlabel("Days ahead", fontsize=9)
     ax.set_ylabel("WAPE", fontsize=9)
-    ax.set_title("Error grows with horizon", fontsize=11, loc="left", pad=8)
+    ax.set_title("Error by days ahead", fontsize=11, loc="left", pad=8)
     fig.tight_layout()
     return finish(fig)
 
@@ -168,10 +168,10 @@ def recommender(metrics: dict, theme: Theme) -> bytes:
                     textcoords="offset points", xytext=(9, 4),
                     fontsize=9, color=theme.ink)
     k = metrics.get("k", 10)
-    ax.set_xlabel(f"Recall@{k} — did it find what the user played", fontsize=9)
-    ax.set_ylabel("Catalogue coverage — how much of the catalogue it ever shows",
+    ax.set_xlabel(f"Recall@{k} (did it find what the user played)", fontsize=9)
+    ax.set_ylabel("Catalogue coverage (share of the catalogue it ever shows)",
                   fontsize=9)
-    ax.set_title("Accuracy is not the whole ranking", fontsize=11, loc="left", pad=8)
+    ax.set_title("Recall vs catalogue coverage", fontsize=11, loc="left", pad=8)
     pad_x = (max(recall) - min(recall) or 0.01) * 0.22
     ax.set_xlim(min(recall) - pad_x, max(recall) + pad_x * 2.2)
     ax.set_ylim(-0.03, min(1.05, max(coverage) * 1.25 + 0.05))
